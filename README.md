@@ -18,7 +18,7 @@ Welcome to the **Word Guessing Game**! This is a fun and interactive game where 
 
 ## 🖥️ Live Demo
 You can play the game live here:  
-👉 [**Your GitHub Pages Link**](https://your-username.github.io/word-guessing-game/) *(Replace with actual link)*
+👉 [**Your GitHub Pages Link**](https://Chandan636125.github.io/word_guessing_game/) *(Replace with actual link)*
 
 ## 📜 How to Play?
 1. Start typing in the first row of boxes.
@@ -33,4 +33,4 @@ You can play the game live here:
 ## 🚀 How to Run Locally?
 1. Clone the repository:
    ```sh
-   git clone https://github.com/YOUR_USERNAME/word-guessing-game.git
+   git clone https://github.com/Chandan636125/word_guessing_game.git
