@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Word Guessing Game</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            text-align: center;
+            background: linear-gradient(135deg, #48c6ef, #6f86d6);
+            color: white;
+            padding: 20px;
+        }
+        .container {
+            background: rgba(0, 0, 0, 0.85);
+            padding: 20px;
+            border-radius: 15px;
+            display: inline-block;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+        .word-box {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 15px;
+            gap: 5px;
+        }
+        .letter {
+            width: 50px;
+            height: 50px;
+            border: 2px solid white;
+            font-size: 28px;
+            text-align: center;
+            background-color: white;
+            color: black;
+            font-weight: bold;
+            border-radius: 10px;
+        }
+        .green { background-color: #4CAF50; color: white; }
+        .yellow { background-color: #FFC107; color: black; }
+        .red { background-color: #F44336; color: white; }
+        .rules {
+            text-align: left;
+            max-width: 500px;
+            margin: 0 auto;
+            font-size: 16px;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Word Guessing Game</h1>
+        <p>Try to guess the secret word! You have 4 attempts. The correct letters will turn green, misplaced ones will turn yellow, and incorrect ones will turn red.</p>
+        <div class="rules">
+            <h3>Rules:</h3>
+            <ul>
+                <li>You must enter a word of the same length as the secret word.</li>
+                <li>Words should not contain repeated letters.</li>
+                <li>Green means the letter is correct and in the right place.</li>
+                <li>Yellow means the letter is in the word but in the wrong position.</li>
+                <li>Red means the letter is incorrect.</li>
+                <li>You have only 4 attempts to guess the correct word.</li>
+            </ul>
+        </div>
+        <div id="game-board"></div>
+        <p id="result"></p>
+    </div>
+
+    <!-- 🎵 Sound Effects -->
+    <audio id="win-sound" src="https://www.fesliyanstudios.com/play-mp3/4381"></audio>
+    <audio id="wrong-sound" src="https://www.fesliyanstudios.com/play-mp3/4383"></audio>
+    <audio id="green-sound" src="https://www.fesliyanstudios.com/play-mp3/4384"></audio>
+    <audio id="yellow-sound" src="https://www.fesliyanstudios.com/play-mp3/4385"></audio>
+    <audio id="red-sound" src="https://www.fesliyanstudios.com/play-mp3/4386"></audio>
+
+    <script>
+       const words4 = ["MINT", "FORK", "CLAP", "JUMP", "SPOT", "GRAB", "WISH", "FLUX"];
+const words5 = ["PLANT", "CRISP", "BLEND", "SHOUT", "FLOCK", "TIGER", "GRASP", "STONE"];
+
+// Function to shuffle words
+function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        let j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+}
+
+// Shuffle both lists separately
+shuffleArray(words4);
+shuffleArray(words5);
+
+// Combine shuffled words
+const words = [...words4, ...words5];
+
+// Pick a random word
+let correctWord = words[Math.floor(Math.random() * words.length)];
+let attempts = 4;
+
+// 🎮 Create Input Boxes
+function createInputBoxes() {
+    const board = document.getElementById("game-board");
+
+    const row = document.createElement("div");
+    row.className = "word-box";
+
+    for (let j = 0; j < correctWord.length; j++) {
+        const box = document.createElement("input");
+        box.className = "letter";
+        box.setAttribute("maxlength", "1");
+        box.addEventListener("input", handleInput);
+        box.addEventListener("keydown", handleKeyEvents);
+        row.appendChild(box);
+    }
+
+    board.appendChild(row);
+    row.firstChild.focus();
+}
+
+// 🎯 Handle Input & Move Cursor
+function handleInput(event) {
+    event.target.value = event.target.value.toUpperCase();
+    const boxes = Array.from(event.target.parentNode.children);
+    const index = boxes.indexOf(event.target);
+    if (event.target.value && index < boxes.length - 1) {
+        boxes[index + 1].focus();
+    }
+}
+
+// 🎮 Handle Arrow Keys & Backspace
+function handleKeyEvents(event) {
+    const boxes = Array.from(event.target.parentNode.children);
+    const index = boxes.indexOf(event.target);
+
+    if (event.key === "Backspace" && !event.target.value && index > 0) {
+        boxes[index - 1].focus();
+        boxes[index - 1].value = "";
+    } else if (event.key === "ArrowRight" && index < boxes.length - 1) {
+        boxes[index + 1].focus();
+    } else if (event.key === "ArrowLeft" && index > 0) {
+        boxes[index - 1].focus();
+    } else if (event.key === "Enter") {
+        makeGuess();
+    }
+}
+
+// 🎯 Process User Guess
+function makeGuess() {
+    if (attempts === 0) return;
+
+    const row = document.querySelector(".word-box:last-child");
+    const boxes = row.getElementsByClassName("letter");
+    let guess = "";
+
+    for (let i = 0; i < boxes.length; i++) {
+        guess += boxes[i].value;
+    }
+
+    if (guess.length !== correctWord.length) {
+        alert(`Enter a valid ${correctWord.length}-letter word.`);
+        return;
+    }
+
+    let correctWordCopy = correctWord.split("");
+    let checkedIndices = [];
+
+    // Check correct positions (Green)
+    for (let i = 0; i < guess.length; i++) {
+        if (guess[i] === correctWord[i]) {
+            boxes[i].classList.add("green");
+            correctWordCopy[i] = null;
+            checkedIndices.push(i);
+        }
+    }
+
+    // Check misplaced letters (Yellow) & Incorrect (Red)
+    for (let i = 0; i < guess.length; i++) {
+        if (!checkedIndices.includes(i) && correctWordCopy.includes(guess[i])) {
+            boxes[i].classList.add("yellow");
+            correctWordCopy[correctWordCopy.indexOf(guess[i])] = null;
+        } else if (!checkedIndices.includes(i)) {
+            boxes[i].classList.add("red");
+        }
+        boxes[i].setAttribute("disabled", "true");
+    }
+
+    // 🎉 Win Condition
+    if (guess === correctWord) {
+        document.getElementById("result").textContent = "🎉 Congratulations! You guessed the correct word!";
+        showNewGameButton();
+        return;
+    }
+
+    attempts--;
+    if (attempts === 0) {
+        document.getElementById("result").textContent = `❌ Game Over! The correct word was: ${correctWord}`;
+        showNewGameButton();
+    } else {
+        createInputBoxes();
+    }
+}
+
+// 🔄 Show New Game Button
+function showNewGameButton() {
+    const newGameBtn = document.createElement("button");
+    newGameBtn.textContent = "🔄 New Game";
+    newGameBtn.onclick = resetGame;
+    document.getElementById("game-board").appendChild(newGameBtn);
+}
+
+// 🔄 Reset Game
+function resetGame() {
+    shuffleArray(words4);
+    shuffleArray(words5);
+    const words = [...words4, ...words5];
+    correctWord = words[Math.floor(Math.random() * words.length)];
+    attempts = 4;
+    document.getElementById("result").textContent = "";
+    document.getElementById("game-board").innerHTML = "";
+    createInputBoxes();
+}
+
+// Start Game
+createInputBoxes();
+
+    </script>
+</body>
+</html>
